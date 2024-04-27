@@ -1,6 +1,7 @@
 package application;
 
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -20,8 +21,9 @@ public class Game {
     private Group root;
     private Canvas canvas;
 
-    public final static int WINDOW_WIDTH = 1200;
-    public final static int WINDOW_HEIGHT = 750;
+    public final static int WINDOW_WIDTH = 628;
+    public final static int WINDOW_HEIGHT = 760;
+    
 
     public Game() {
         this.root = new Group();
@@ -34,7 +36,7 @@ public class Game {
         this.stage = stage;
         stage.setTitle("Fire Nation Invasion");
 
-        initSplash();
+        this.initSplash();
 
         stage.setScene(this.splashScene);
         stage.setResizable(false);
@@ -43,15 +45,15 @@ public class Game {
 
     private void initSplash() {
         StackPane root = new StackPane();
-        root.getChildren().addAll(createCanvas(), createVBox());
+        root.getChildren().addAll(this.createCanvas(), this.createVBox());
         this.splashScene = new Scene(root);
     }
 
     private Canvas createCanvas() {
-        Canvas canvas = new Canvas(WINDOW_WIDTH, WINDOW_HEIGHT);
+        Canvas canvas = new Canvas(Game.WINDOW_WIDTH, Game.WINDOW_HEIGHT);
         GraphicsContext gc = canvas.getGraphicsContext2D();
 
-        Image bg = new Image("images/temporarybg.jpg");
+        Image bg = new Image("images/spaceGameBg.jpg");
         gc.drawImage(bg, 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT); // Draw image with specified width and height
         return canvas;
     }
@@ -65,13 +67,18 @@ public class Game {
         Button b1 = new Button("Start the Adventure");
         Button b2 = new Button("Game Lore");
 
-        vbox.getChildren().addAll(b1, b2 );
+        vbox.getChildren().addAll(b1, b2);
 
-        b1.setOnAction(e -> setGame()); // Use lambda expression for event handling
+        b1.setOnAction(new EventHandler<ActionEvent>() {
+        	@Override
+        	public void handle(ActionEvent e) {
+        		setGame(stage);
+        	}
+        });
         return vbox;
     }
 
-    private void setGame() {
+    private void setGame(Stage stage) {
         stage.setScene(this.gameScene);
 
         GraphicsContext gc = this.canvas.getGraphicsContext2D();
