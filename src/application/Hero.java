@@ -1,0 +1,101 @@
+package application;
+
+import java.util.ArrayList;
+
+import javafx.scene.image.Image;
+
+class Hero extends Sprite {
+	private String name;
+	private boolean alive;
+	private int bulletType;
+	private int score;
+	private ArrayList<Bullet> bullets;
+	private BulletTimer timer;
+	
+	private final static Image HERO_IMAGE = new Image("images/firebender.png", 100, 100, true, true);
+	private final static double INITIAL_X = 150;
+	private final static double INITIAL_Y = 640;
+	public final static int HERO_SPEED = 15;
+	
+	Hero(String name) {
+		super(Hero.INITIAL_X, Hero.INITIAL_Y, Hero.HERO_IMAGE);
+		this.name = name;
+		this.alive = true;
+		this.bullets = new ArrayList<Bullet>();
+	}
+	
+	String getName() {
+		return this.name;
+	}
+	
+	int getScore() {
+		return this.score;
+	}
+	
+	ArrayList<Bullet> getBullets() {
+		return this.bullets;
+	}
+	
+//	void shoot() {
+//		this.bullets.add(new Bullet(this.bulletType, this.xPos+(this.width/2), this.yPos));
+//	}
+	
+	void shoot() {
+	    double bulletX;
+	    if (this.isUpgraded()) {
+	        bulletX = this.xPos + (this.width / 2) - (Bullet.getUpgradedBulletImage().getWidth() / 2);
+	    } else {
+	        bulletX = this.xPos + (this.width / 2) - (Bullet.getOrdinaryBulletImage().getWidth() / 2);
+	    }
+	    double bulletY =  this.yPos + this.height / 2; // Adjust the height based on bullet image
+	    this.bullets.add(new Bullet(this.bulletType, bulletX, bulletY));
+	}
+	
+	void die() {
+		this.alive = false;
+	}
+	
+	boolean isAlive() {
+		return this.alive;
+	}
+	
+	private boolean isUpgraded() {
+		if(this.bulletType == Bullet.UPGRADED_BULLET) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	
+	void downgradeBullets() {
+		this.bulletType = Bullet.ORDINARY_BULLET;
+	}
+	
+	void upgradeBullets() {
+		if(!this.isUpgraded()) {
+			this.bulletType = Bullet.UPGRADED_BULLET;
+			this.timer = new BulletTimer(this);
+			this.timer.start();
+		} else {
+			this.timer.refresh();
+		}
+	}
+	
+	void gainScore(int increase) {
+		this.score+=increase;
+	}
+
+	public void move() {
+	    // Update the x position based on the current speed
+	    this.xPos += this.dx;
+	    
+	    // Ensure the hero stays within the bounds of the game window
+	    if (this.xPos < 0) {
+	        this.xPos = 0;
+	    } else if (this.xPos + this.width > Game.WINDOW_WIDTH) {
+	        this.xPos = Game.WINDOW_WIDTH - this.width;
+	    }
+	}
+
+}
