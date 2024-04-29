@@ -10,7 +10,7 @@ public class Soldier extends Sprite {
 	private Hero hero;
 	private ArrayList<Item> collectibles;
 	private boolean hasItem;
-	private final static double SOLDIER_SPEED = 4;
+	private final static double SOLDIER_SPEED = 2;
 	private final static Image BASIC_SOLDIER_IMAGE = new Image("images/soldier.png", 100, 100, true, true);
 	private final static Image MOUNTED_SOLDIER_IMAGE = new Image("images/mounted_soldier.png", 100, 100, true, true);
 	private final static int BASIC_SOLDIER_HEALTH = 10;

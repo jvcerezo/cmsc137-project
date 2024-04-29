@@ -2,7 +2,9 @@ package application;
 
 import java.util.ArrayList;
 
+import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
+import javafx.scene.control.ButtonType;
 
 class Hero extends Sprite {
 	private String name;

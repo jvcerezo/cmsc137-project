@@ -4,7 +4,7 @@ import javafx.scene.image.Image;
 
 abstract class Item extends Sprite {
 	double speed;
-	private final static double COLL_SPEED = 4;
+	private final static double COLL_SPEED = 2;
 	
 	Item(double x, double y, Image image) {
 		super(x, y, image);

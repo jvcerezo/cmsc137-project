@@ -38,7 +38,7 @@ public class GameTimer extends AnimationTimer {
 	public final static int SOLDIER_INITIAL_YPOS = -40;
 	public final static double SHOOT_DELAY = 0.2;
 	public final static double SPAWN_DELAY = 1;
-	private static final double BACKGROUND_SPEED = 2;
+	private static final double BACKGROUND_SPEED = 1;
 	
 	
 	GameTimer(Scene scene, GraphicsContext gc) {
