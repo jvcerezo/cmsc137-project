@@ -46,6 +46,7 @@ public class Game {
     private List<Hero> otherHeroes;
     private List<Bullet> bullets;
     private List<Soldier> soldiers;
+    private List<Item> collectibles;
 
     public final static int WINDOW_WIDTH = 628;
     public final static int WINDOW_HEIGHT = 760;
@@ -468,6 +469,6 @@ public class Game {
     }
 
     public List<Item> getCollectibles() {
-        return getCollectibles();
+        return collectibles;
     }
 }
