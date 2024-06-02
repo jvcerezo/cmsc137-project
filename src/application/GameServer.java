@@ -51,6 +51,10 @@ public class GameServer {
                     startGame(lobbyName);
                 } else if (message.startsWith("updateHero;")) {
                     broadcastMessage(message, clientAddress, clientPort);
+                } else if (message.startsWith("bulletUpdate;")) {
+                    broadcastMessage(message, clientAddress, clientPort);
+                } else if (message.startsWith("enemyUpdate;")) {
+                    broadcastMessage(message, clientAddress, clientPort);
                 } else {
                     broadcastMessage(message, clientAddress, clientPort);
                 }

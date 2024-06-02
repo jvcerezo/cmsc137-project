@@ -47,6 +47,10 @@ public class ClientThread extends Thread {
                     double yPos = Double.parseDouble(parts[3]);
                     Platform.runLater(() -> game.updateHeroPosition(username, xPos, yPos));
                 }
+            } else if (message.startsWith("bulletUpdate;")) {
+                Platform.runLater(() -> game.updateBulletState(message));
+            } else if (message.startsWith("enemyUpdate;")) {
+                Platform.runLater(() -> game.updateEnemyState(message));
             } else {
                 Platform.runLater(() -> {
                     String current = textArea.getText();

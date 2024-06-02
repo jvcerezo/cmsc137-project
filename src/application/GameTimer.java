@@ -3,7 +3,6 @@ package application;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
 import javafx.animation.AnimationTimer;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
@@ -21,21 +20,21 @@ public class GameTimer extends AnimationTimer {
     private Hero hero;
     private List<Hero> otherHeroes;
     private Scene scene;
-    private ArrayList<Soldier> soldiers;
-    private ArrayList<Item> collectibles;
+    private List<Soldier> soldiers;
+    private List<Item> collectibles;
+    private List<Bullet> bullets;
     private static boolean goLeft;
     private static boolean goRight;
     private double backgroundY;
     
     private Image background = new Image("images/gamebg2.jpg");
-    Bullet bullets;
-    public final static int MIN_SOLDIERS = 6;
-    public final static int MAX_SOLDIERS = 8;
-    public final static int SOLDIER_TYPES = 2;
-    public final static int WIDTH_PER_SOLDIER = 50;
-    public final static int SOLDIER_INITIAL_YPOS = -40;
-    public final static double SHOOT_DELAY = 0.2;
-    public final static double SPAWN_DELAY = 2;
+    private static final int MIN_SOLDIERS = 6;
+    private static final int MAX_SOLDIERS = 8;
+    private static final int SOLDIER_TYPES = 2;
+    private static final int WIDTH_PER_SOLDIER = 50;
+    private static final int SOLDIER_INITIAL_YPOS = -40;
+    private static final double SHOOT_DELAY = 0.2;
+    private static final double SPAWN_DELAY = 2;
     private static final double BACKGROUND_SPEED = 0.5;
     
     private Game game;
@@ -45,8 +44,9 @@ public class GameTimer extends AnimationTimer {
         this.scene = scene;
         this.hero = hero;
         this.otherHeroes = otherHeroes;
-        this.soldiers = new ArrayList<Soldier>();
-        this.collectibles = new ArrayList<Item>();
+        this.soldiers = game.getSoldiers();
+        this.collectibles = new ArrayList<>();
+        this.bullets = game.getBullets();
         this.startSpawn = this.startShoot = System.nanoTime();
         this.prepareActionHandlers();
         this.game = game;
@@ -93,7 +93,7 @@ public class GameTimer extends AnimationTimer {
         
         //spawn soldiers
         if (spawnElapsedTime > GameTimer.SPAWN_DELAY) {
-            this.spawnsoldiers();
+            this.spawnSoldiers();
             this.startSpawn = System.nanoTime();
         }
     }
@@ -107,10 +107,10 @@ public class GameTimer extends AnimationTimer {
         }
 
         //draw sprite in array list
-        for (Soldier soldiers : this.soldiers) {
-            soldiers.render(this.gc);
+        for (Soldier soldier : this.soldiers) {
+            soldier.render(this.gc);
         }
-        for (Bullet b : this.hero.getBullets()) {
+        for (Bullet b : this.bullets) { // Render all bullets in the game
             b.render(this.gc);
         }
     
@@ -121,7 +121,7 @@ public class GameTimer extends AnimationTimer {
     
     void moveSprites() {
         this.moveHero();
-        this.movesoldiers();
+        this.moveSoldiers();
         this.moveBullets();
         this.moveCollectibles();
     }
@@ -165,23 +165,23 @@ public class GameTimer extends AnimationTimer {
         game.sendMessage("updateHero;" + hero.getName() + ";" + hero.getXPos() + ";" + hero.getYPos());
     }
     
-    private void movesoldiers() {
-    for (int i = 0; i < this.soldiers.size(); i++) {
-        Soldier s = this.soldiers.get(i);
-        if (s.isVisible()) {
-            s.move();
-            s.checkCollision(this.hero);
-        } else {
-            this.soldiers.remove(i);
+    private void moveSoldiers() {
+        for (int i = 0; i < this.soldiers.size(); i++) {
+            Soldier s = this.soldiers.get(i);
+            if (s.isVisible()) {
+                s.move();
+                s.checkCollision(this.hero);
+            } else {
+                this.soldiers.remove(i);
+            }
         }
-    }
     }
     
     
     private void moveBullets() {
         ArrayList<Bullet> bulletsToRemove = new ArrayList<>();
 
-        for (Bullet bullet : this.hero.getBullets()) {
+        for (Bullet bullet : this.bullets) {
             bullet.move();
             if (bullet.getYPos() >= Game.WINDOW_HEIGHT) {
                 // If bullet is off-screen, mark it for removal
@@ -190,24 +190,24 @@ public class GameTimer extends AnimationTimer {
         }
 
         // Remove bullets that are off-screen
-        this.hero.getBullets().removeAll(bulletsToRemove);
+        this.bullets.removeAll(bulletsToRemove);
     }
     
     
     private void moveCollectibles() {
-    for (int i = 0; i < this.collectibles.size(); i++) {
-        Item c = this.collectibles.get(i);
-        if (c.isVisible()) {
-            c.move();
-            c.checkCollision(this.hero);
-        } else {
-            this.collectibles.remove(i);
+        for (int i = 0; i < this.collectibles.size(); i++) {
+            Item c = this.collectibles.get(i);
+            if (c.isVisible()) {
+                c.move();
+                c.checkCollision(this.hero);
+            } else {
+                this.collectibles.remove(i);
+            }
         }
     }
-    }
     
     
-    private void spawnsoldiers() {
+    private void spawnSoldiers() {
         int xPos, yPos = GameTimer.SOLDIER_INITIAL_YPOS, type;
         Random r = new Random();
         
@@ -216,7 +216,10 @@ public class GameTimer extends AnimationTimer {
             type = r.nextInt(GameTimer.SOLDIER_TYPES);
             
             xPos = i * GameTimer.WIDTH_PER_SOLDIER;
-            this.soldiers.add(new Soldier(type, xPos, yPos, this.collectibles, this.hero));
+            Soldier soldier = new Soldier(type, xPos, yPos, this.collectibles, this.hero);
+            this.soldiers.add(soldier);
+            // Send enemy update to server
+            game.sendMessage("enemyUpdate;enemy," + soldier.getXPos() + "," + soldier.getYPos());
         }
     }
     //

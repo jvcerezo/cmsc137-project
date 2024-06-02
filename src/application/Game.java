@@ -44,6 +44,8 @@ public class Game {
 
     private Hero hero;
     private List<Hero> otherHeroes;
+    private List<Bullet> bullets;
+    private List<Soldier> soldiers;
 
     public final static int WINDOW_WIDTH = 628;
     public final static int WINDOW_HEIGHT = 760;
@@ -79,6 +81,8 @@ public class Game {
         this.canvas = new Canvas(WINDOW_WIDTH, WINDOW_HEIGHT);
         this.root.getChildren().add(this.canvas);
         this.otherHeroes = new ArrayList<>();
+        this.bullets = new ArrayList<>();
+        this.soldiers = new ArrayList<>();
         this.initGameScene();
     }
 
@@ -277,7 +281,7 @@ public class Game {
     }
 
     public void setGame(Stage stage) throws IOException {
-        this.hero = new Hero(username, 150, 640); // Default hero position
+        this.hero = new Hero(username, 150, 640, this); // Pass the game instance
         if (!otherHeroes.isEmpty()) {
             otherHeroes.get(0).setXPos(Game.WINDOW_WIDTH - 150); // Place other player on the right side
         }
@@ -418,8 +422,24 @@ public class Game {
             }
         }
         // If hero not found, create a new one
-        Hero newHero = new Hero(username, xPos, yPos);
+        Hero newHero = new Hero(username, xPos, yPos, this); // Pass the game instance
         otherHeroes.add(newHero);
+    }
+
+    public void updateBulletState(String message) {
+        String[] parts = message.split(",");
+        double xPos = Double.parseDouble(parts[1]);
+        double yPos = Double.parseDouble(parts[2]);
+        Bullet bullet = new Bullet(Bullet.ORDINARY_BULLET, xPos, yPos);
+        bullets.add(bullet);
+    }
+
+    public void updateEnemyState(String message) {
+        String[] parts = message.split(",");
+        double xPos = Double.parseDouble(parts[1]);
+        double yPos = Double.parseDouble(parts[2]);
+        Soldier soldier = new Soldier(0, (int)xPos, (int)yPos, this.getCollectibles(), this.getHero());
+        soldiers.add(soldier);
     }
 
     // Getter methods
@@ -437,5 +457,17 @@ public class Game {
 
     public Hero getHero() {
         return hero;
+    }
+
+    public List<Bullet> getBullets() {
+        return bullets;
+    }
+
+    public List<Soldier> getSoldiers() {
+        return soldiers;
+    }
+
+    public List<Item> getCollectibles() {
+        return getCollectibles();
     }
 }
