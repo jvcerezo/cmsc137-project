@@ -4,9 +4,9 @@ This project is a simple multiplayer game called "Fire Nation Invasion" where pl
 
 Members:
 
-Jet Timothy V. Cerezo
-Jazmin Iloso
-Jay Gonzales Latigay
+Jet Timothy V. Cerezo <br />
+Jazmin Iloso <br />
+Jay Gonzales Latigay <br />
 
 ## Prerequisites
 
