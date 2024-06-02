@@ -29,8 +29,7 @@ public class ClientThread extends Thread {
                 throw new RuntimeException(e);
             }
             String message = new String(packet.getData(), 0, packet.getLength()).trim();
-            if (message.equals("start;")) {
-                // Handle starting the game here
+            if (message.startsWith("start;")) {
                 Platform.runLater(() -> {
                     try {
                         game.setGame(game.getStage());
@@ -38,13 +37,19 @@ public class ClientThread extends Thread {
                         e.printStackTrace();
                     }
                 });
-            } else if (message.startsWith("Player") || message.startsWith("Lobby")) {
-                game.updateLobby(message);
-            } else if (message.startsWith("Available Lobbies:")) {
-                game.updateLobby(message);
+            } else if (message.startsWith("Player") || message.startsWith("Lobby") || message.startsWith("Available Lobbies:")) {
+                Platform.runLater(() -> game.updateLobby(message));
+            } else if (message.startsWith("updateHero;")) {
+                String[] parts = message.split(";");
+                if (parts.length == 4) {
+                    String username = parts[1];
+                    double xPos = Double.parseDouble(parts[2]);
+                    double yPos = Double.parseDouble(parts[3]);
+                    Platform.runLater(() -> game.updateHeroPosition(username, xPos, yPos));
+                }
             } else {
-                String current = textArea.getText();
                 Platform.runLater(() -> {
+                    String current = textArea.getText();
                     textArea.setText(current + message + "\n");
                     textArea.setScrollTop(Double.MAX_VALUE);
                 });

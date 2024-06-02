@@ -6,7 +6,12 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-
+import java.util.ArrayList;
+import java.util.List;
+import javafx.animation.AnimationTimer;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -24,6 +29,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class Game {
     private Stage stage;
@@ -35,6 +41,9 @@ public class Game {
     private TextArea lobbyTextArea;
     private TextArea listLobbiesTextArea;
     private String username;
+
+    private Hero hero;
+    private List<Hero> otherHeroes;
 
     public final static int WINDOW_WIDTH = 628;
     public final static int WINDOW_HEIGHT = 760;
@@ -69,6 +78,7 @@ public class Game {
         this.gameScene = new Scene(root);
         this.canvas = new Canvas(WINDOW_WIDTH, WINDOW_HEIGHT);
         this.root.getChildren().add(this.canvas);
+        this.otherHeroes = new ArrayList<>();
         this.initGameScene();
     }
 
@@ -101,11 +111,9 @@ public class Game {
                 canvas.requestFocus();
             } else if (event.getCode() == KeyCode.ENTER) {
                 String temp = (username != null ? username : "Player") + ": " + inputField.getText(); // message to send
-                textArea.setText(textArea.getText() + temp + "\n"); // update message
-                textArea.setScrollTop(Double.MAX_VALUE);
                 inputField.setText("");
 
-                sendMessage(temp);
+                sendMessage(temp); // send message to the server
             }
         });
 
@@ -269,12 +277,23 @@ public class Game {
     }
 
     public void setGame(Stage stage) throws IOException {
-        stage.setScene(this.gameScene);
+        this.hero = new Hero(username, 150, 640); // Default hero position
+        if (!otherHeroes.isEmpty()) {
+            otherHeroes.get(0).setXPos(Game.WINDOW_WIDTH - 150); // Place other player on the right side
+        }
 
         GraphicsContext gc = this.canvas.getGraphicsContext2D();
-
-        GameTimer gameTimer = new GameTimer(gameScene, gc);
+        GameTimer gameTimer = new GameTimer(gameScene, gc, hero, otherHeroes, this);
         gameTimer.start();
+
+        // Start a timer to send hero's position to the server
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(50), event -> {
+            sendMessage("updateHero;" + username + ";" + hero.getXPos() + ";" + hero.getYPos());
+        }));
+        timeline.setCycleCount(Timeline.INDEFINITE); // Corrected this line
+        timeline.play();
+
+        Platform.runLater(() -> stage.setScene(this.gameScene));
     }
 
     private void setLobby(Stage stage, boolean isHost, String lobbyName) throws IOException {
@@ -390,6 +409,19 @@ public class Game {
         }
     }
 
+    public void updateHeroPosition(String username, double xPos, double yPos) {
+        for (Hero h : otherHeroes) {
+            if (h.getName().equals(username)) {
+                h.setXPos(xPos);
+                h.setYPos(yPos);
+                return;
+            }
+        }
+        // If hero not found, create a new one
+        Hero newHero = new Hero(username, xPos, yPos);
+        otherHeroes.add(newHero);
+    }
+
     // Getter methods
     public DatagramSocket getSocket() {
         return socket;
@@ -401,5 +433,9 @@ public class Game {
 
     public Stage getStage() {
         return stage;
+    }
+
+    public Hero getHero() {
+        return hero;
     }
 }

@@ -1,6 +1,7 @@
 package application;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import javafx.animation.AnimationTimer;
@@ -18,6 +19,7 @@ public class GameTimer extends AnimationTimer {
     private long startShoot;
     private GraphicsContext gc;
     private Hero hero;
+    private List<Hero> otherHeroes;
     private Scene scene;
     private ArrayList<Soldier> soldiers;
     private ArrayList<Item> collectibles;
@@ -25,26 +27,29 @@ public class GameTimer extends AnimationTimer {
     private static boolean goRight;
     private double backgroundY;
     
-    private Image background =  new Image( "images/gamebg2.jpg");
+    private Image background = new Image("images/gamebg2.jpg");
     Bullet bullets;
     public final static int MIN_SOLDIERS = 6;
     public final static int MAX_SOLDIERS = 8;
     public final static int SOLDIER_TYPES = 2;
-    public final static int WIDTH_PER_SOLDIER = 70;
+    public final static int WIDTH_PER_SOLDIER = 50;
     public final static int SOLDIER_INITIAL_YPOS = -40;
     public final static double SHOOT_DELAY = 0.2;
-    public final static double SPAWN_DELAY = 1;
-    private static final double BACKGROUND_SPEED = 1;
+    public final static double SPAWN_DELAY = 2;
+    private static final double BACKGROUND_SPEED = 0.5;
     
-    
-    GameTimer(Scene scene, GraphicsContext gc) {
+    private Game game;
+
+    GameTimer(Scene scene, GraphicsContext gc, Hero hero, List<Hero> otherHeroes, Game game) {
         this.gc = gc;
         this.scene = scene;
-        this.hero = new Hero("Pyra");
+        this.hero = hero;
+        this.otherHeroes = otherHeroes;
         this.soldiers = new ArrayList<Soldier>();
         this.collectibles = new ArrayList<Item>();
         this.startSpawn = this.startShoot = System.nanoTime();
         this.prepareActionHandlers();
+        this.game = game;
     }
     
     @Override
@@ -56,7 +61,7 @@ public class GameTimer extends AnimationTimer {
         
         this.drawScore();
         
-        if(!this.hero.isAlive()) {
+        if (!this.hero.isAlive()) {
             this.stop();                          //stops AnimationTimer
 //            this.drawGameOver();                  //draw Game Over text
         }
@@ -64,16 +69,16 @@ public class GameTimer extends AnimationTimer {
     
     void redrawBackgroundImage() {
         this.gc.drawImage(background, 0, 0);
-        this.gc.clearRect(0,0, Game.WINDOW_WIDTH, Game.WINDOW_HEIGHT);
+        this.gc.clearRect(0, 0, Game.WINDOW_WIDTH, Game.WINDOW_HEIGHT);
         
         //redraw background image (moving effect)
         this.backgroundY += GameTimer.BACKGROUND_SPEED;
         
-        this.gc.drawImage(background, 0, this.backgroundY-this.background.getHeight());
+        this.gc.drawImage(background, 0, this.backgroundY - this.background.getHeight());
         this.gc.drawImage(background, 0, this.backgroundY);
         
-        if(this.backgroundY >= Game.WINDOW_HEIGHT) {
-            this.backgroundY = Game.WINDOW_HEIGHT-this.background.getHeight();
+        if (this.backgroundY >= Game.WINDOW_HEIGHT) {
+            this.backgroundY = Game.WINDOW_HEIGHT - this.background.getHeight();
         }
     }
     void autoShootSpawn(long currentNanoTime) {
@@ -81,13 +86,13 @@ public class GameTimer extends AnimationTimer {
         double shootElapsedTime = (currentNanoTime - this.startShoot) / 1000000000.0;
         
         //shoot
-        if(shootElapsedTime > GameTimer.SHOOT_DELAY ) {
+        if (shootElapsedTime > GameTimer.SHOOT_DELAY) {
             this.hero.shoot();
             this.startShoot = System.nanoTime();
         }
         
         //spawn soldiers
-        if(spawnElapsedTime > GameTimer.SPAWN_DELAY) {
+        if (spawnElapsedTime > GameTimer.SPAWN_DELAY) {
             this.spawnsoldiers();
             this.startSpawn = System.nanoTime();
         }
@@ -95,6 +100,11 @@ public class GameTimer extends AnimationTimer {
     void renderSprites() {
         //draw hero;
         this.hero.render(this.gc);
+
+        //draw other heroes
+        for (Hero otherHero : this.otherHeroes) {
+            otherHero.render(this.gc);
+        }
 
         //draw sprite in array list
         for (Soldier soldiers : this.soldiers) {
@@ -120,10 +130,9 @@ public class GameTimer extends AnimationTimer {
     this.scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
         public void handle(KeyEvent e) {
             String code = e.getCode().toString();
-            if(code.equals("LEFT")) {
+            if (code.equals("LEFT")) {
                 GameTimer.goLeft = true;
-            }
-            else if (code.equals("RIGHT")){
+            } else if (code.equals("RIGHT")) {
                 GameTimer.goRight = true;
             }
         }
@@ -132,10 +141,9 @@ public class GameTimer extends AnimationTimer {
     this.scene.setOnKeyReleased(new EventHandler<KeyEvent>() {
         public void handle(KeyEvent e) {
             String code = e.getCode().toString();
-            if(code.equals("LEFT")) {
+            if (code.equals("LEFT")) {
                 GameTimer.goLeft = false;
-            }
-            else if(code.equals("RIGHT")){
+            } else if (code.equals("RIGHT")) {
                 GameTimer.goRight = false;
             }
         }
@@ -144,26 +152,26 @@ public class GameTimer extends AnimationTimer {
     }
     
     private void moveHero() {
-    if (GameTimer.goLeft) {
-        this.hero.setDX(-Hero.HERO_SPEED);
-    }
-    else if (GameTimer.goRight) {
-        this.hero.setDX(Hero.HERO_SPEED);
-    }
-    else {
-        this.hero.setDX(0);
-    }
-    this.hero.move();
+        if (GameTimer.goLeft) {
+            this.hero.setDX(-Hero.HERO_SPEED);
+        } else if (GameTimer.goRight) {
+            this.hero.setDX(Hero.HERO_SPEED);
+        } else {
+            this.hero.setDX(0);
+        }
+        this.hero.move();
+
+        // Update server with hero's position
+        game.sendMessage("updateHero;" + hero.getName() + ";" + hero.getXPos() + ";" + hero.getYPos());
     }
     
     private void movesoldiers() {
-    for(int i = 0; i < this.soldiers.size(); i++) {
+    for (int i = 0; i < this.soldiers.size(); i++) {
         Soldier s = this.soldiers.get(i);
-        if(s.isVisible()) {
+        if (s.isVisible()) {
             s.move();
             s.checkCollision(this.hero);
-        }
-        else {
+        } else {
             this.soldiers.remove(i);
         }
     }
@@ -187,13 +195,12 @@ public class GameTimer extends AnimationTimer {
     
     
     private void moveCollectibles() {
-    for(int i = 0; i < this.collectibles.size(); i++) {
-        Item c= this.collectibles.get(i);
-        if(c.isVisible()) {
+    for (int i = 0; i < this.collectibles.size(); i++) {
+        Item c = this.collectibles.get(i);
+        if (c.isVisible()) {
             c.move();
             c.checkCollision(this.hero);
-        }
-        else {
+        } else {
             this.collectibles.remove(i);
         }
     }
@@ -204,12 +211,11 @@ public class GameTimer extends AnimationTimer {
         int xPos, yPos = GameTimer.SOLDIER_INITIAL_YPOS, type;
         Random r = new Random();
         
-        int aswangCount = r.nextInt(GameTimer.MAX_SOLDIERS-GameTimer.MIN_SOLDIERS+1)+GameTimer.MIN_SOLDIERS;
-        for(int i = 0; i < aswangCount; i++) {
+        int aswangCount = r.nextInt(GameTimer.MAX_SOLDIERS - GameTimer.MIN_SOLDIERS + 1) + GameTimer.MIN_SOLDIERS;
+        for (int i = 0; i < aswangCount; i++) {
             type = r.nextInt(GameTimer.SOLDIER_TYPES);
             
-            xPos = i*GameTimer.WIDTH_PER_SOLDIER;
-//            this.soldiers.add(new Aswang(type, xPos, yPos, this.collectibles));
+            xPos = i * GameTimer.WIDTH_PER_SOLDIER;
             this.soldiers.add(new Soldier(type, xPos, yPos, this.collectibles, this.hero));
         }
     }
@@ -217,9 +223,9 @@ public class GameTimer extends AnimationTimer {
     private void drawScore() {
         this.gc.setFont(Font.font("Verdana", FontWeight.BOLD, 20));
         this.gc.setFill(Color.YELLOW);
-        this.gc.fillText("Score: ",20, 30);
-        this.gc.setFont(Font.font("Verdana", FontWeight.BOLD,30));
+        this.gc.fillText("Score: ", 20, 30);
+        this.gc.setFont(Font.font("Verdana", FontWeight.BOLD, 30));
         this.gc.setFill(Color.WHITE);
-        this.gc.fillText(hero.getScore()+"",90, 30);
+        this.gc.fillText(hero.getScore() + "", 90, 30);
     }
 }
